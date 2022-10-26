@@ -63,6 +63,7 @@
 #include <EEPROM.h>     // We are going to read and write PICC's UIDs from/to EEPROM
 #include <SPI.h>        // RC522 Module uses SPI protocol
 #include <MFRC522.h>  // Library for Mifare RC522 Devices
+// /* --LCD-- */ #include <LiquidCrystal.h>
 
 /*
   Instead of a Relay you may want to use a servo. Servos can lock and unlock door locks too
@@ -107,8 +108,14 @@ byte masterCard[4];   // Stores master card's ID read from EEPROM
 #define RST_PIN 9
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 
+// /* --LCD-- */ LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+// /* --LCD-- */ void lcdprint(String line1);
+// /* --LCD-- */ void lcdprint(String line1, String line2);
+
 ///////////////////////////////////////// Setup ///////////////////////////////////
 void setup() {
+	// /* --LCD-- */ lcd.begin(16, 2);
+
   //Arduino Pin Configuration
   pinMode(redLed, OUTPUT);
   pinMode(greenLed, OUTPUT);
@@ -138,9 +145,11 @@ void setup() {
     Serial.println(F("Wipe Button Pressed"));
     Serial.println(F("You have 10 seconds to Cancel"));
     Serial.println(F("This will be remove all records and cannot be undone"));
+		// /* --LCD-- */ lcdprint("APAGAR MESTRE", "10s para apagar");
     bool buttonState = monitorWipeButton(10000); // Give user enough time to cancel operation
     if (buttonState == true && digitalRead(wipeB) == LOW) {    // If button still be pressed, wipe EEPROM
       Serial.println(F("Starting Wiping EEPROM"));
+			// /* --LCD-- */ lcdprint("Apagando mestre", "Aguarde...");
       for (uint16_t x = 0; x < EEPROM.length(); x = x + 1) {    //Loop end of EEPROM address
         if (EEPROM.read(x) == 0) {              //If EEPROM address 0
           // do nothing, already clear, go to the next address in order to save time and reduce writes to EEPROM
@@ -149,6 +158,7 @@ void setup() {
           EEPROM.write(x, 0);       // if not write 0 to clear, it takes 3.3mS
         }
       }
+			// /* --LCD-- */ lcdprint("Mestre apagado!", "Reinicie Arduino");
       Serial.println(F("EEPROM Successfully Wiped"));
       digitalWrite(redLed, LED_OFF);  // visualize a successful wipe
       delay(200);
@@ -172,6 +182,7 @@ void setup() {
   if (EEPROM.read(1) != 143) {
     Serial.println(F("No Master Card Defined"));
     Serial.println(F("Scan A PICC to Define as Master Card"));
+		// /* --LCD-- */ lcdprint("SEM CART. MESTRE", "Ins. car. mestre");
     do {
       successRead = getID();            // sets successRead to 1 when we get read from reader otherwise 0
       digitalWrite(blueLed, LED_ON);    // Visualize Master Card need to be defined
@@ -185,6 +196,7 @@ void setup() {
     }
     EEPROM.write(1, 143);                  // Write to EEPROM we defined Master Card.
     Serial.println(F("Master Card Defined"));
+		// /* --LCD-- */ lcdprint(" CARTAO MESTRE ", "    DEFINIDO    ");
   }
   Serial.println(F("-------------------"));
   Serial.println(F("Master Card's UID"));
@@ -213,11 +225,14 @@ void loop () {
       // Give some feedback
       Serial.println(F("Wipe Button Pressed"));
       Serial.println(F("Master Card will be Erased! in 10 seconds"));
+			// /* --LCD-- */ lcdprint("APAGAR MESTRE", "10s para apagar");
       bool buttonState = monitorWipeButton(10000); // Give user enough time to cancel operation
+			// /* --LCD-- */ lcdprint("Apagando mestre", "Aguarde...");
       if (buttonState == true && digitalRead(wipeB) == LOW) {    // If button still be pressed, wipe EEPROM
         EEPROM.write(1, 0);                  // Reset Magic Number.
         Serial.println(F("Master Card Erased from device"));
         Serial.println(F("Please reset to re-program Master Card"));
+				// /* --LCD-- */ lcdprint("Mestre apagado!", "Reinicie Arduino");
         while (1);
       }
       Serial.println(F("Master Card Erase Cancelled"));
@@ -241,12 +256,14 @@ void loop () {
     else {
       if ( findID(readCard) ) { // If scanned card is known delete it
         Serial.println(F("I know this PICC, removing..."));
+				// /* --LCD-- */ lcdprint("CARTAO CONHECIDO", "Excluindo...");
         deleteID(readCard);
         Serial.println("-----------------------------");
         Serial.println(F("Scan a PICC to ADD or REMOVE to EEPROM"));
       }
       else {                    // If scanned card is not known add it
         Serial.println(F("I do not know this PICC, adding..."));
+				// /* --LCD-- */ lcdprint("CARTAO NOVO", "Adicionando...");
         writeID(readCard);
         Serial.println(F("-----------------------------"));
         Serial.println(F("Scan a PICC to ADD or REMOVE to EEPROM"));
@@ -257,6 +274,7 @@ void loop () {
     if ( isMaster(readCard)) {    // If scanned card's ID matches Master Card's ID - enter program mode
       programMode = true;
       Serial.println(F("Hello Master - Entered Program Mode"));
+			// /* --LCD-- */ lcdprint("* MODO PROGR. *");
       uint8_t count = EEPROM.read(0);   // Read the first Byte of EEPROM that
       Serial.print(F("I have "));     // stores the number of ID's in EEPROM
       Serial.print(count);
@@ -265,14 +283,17 @@ void loop () {
       Serial.println(F("Scan a PICC to ADD or REMOVE to EEPROM"));
       Serial.println(F("Scan Master Card again to Exit Program Mode"));
       Serial.println(F("-----------------------------"));
+			// /* --LCD-- */ lcdprint("* MODO PROGR. *", count + " cartoes cad.");
     }
     else {
       if ( findID(readCard) ) { // If not, see if the card is in the EEPROM
         Serial.println(F("Welcome, You shall pass"));
+				// /* --LCD-- */ lcdprint("   BEM-VINDO");
         granted(300);         // Open the door lock for 300 ms
       }
       else {      // If not, show that the ID was not valid
         Serial.println(F("You shall not pass"));
+				// /* --LCD-- */ lcdprint("     CARTAO     ", "    RECUSADO    ");
         denied();
       }
     }
@@ -535,3 +556,15 @@ bool monitorWipeButton(uint32_t interval) {
   }
   return true;
 }
+
+////////////////////////// PRINT TO LCD ///////////////////////////////
+// /* --LCD-- */ void lcdprint(String line1) {
+// /* --LCD-- */   lcdprint(line1, "");
+// /* --LCD-- */ }
+
+// /* --LCD-- */ void lcdprint(String line1, String line2){
+// /* --LCD-- */   lcd.clear();
+// /* --LCD-- */   lcd.print(line1);
+// /* --LCD-- */   lcd.setCursor(0, 1);
+// /* --LCD-- */   lcd.print(line2);
+// /* --LCD-- */ }
