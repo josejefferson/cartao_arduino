@@ -52,6 +52,7 @@ void setup() {
   lcd.createChar(3, padLock4); // --LCD--
   lcd.createChar(4, padLock1Open); // --LCD--
   lcd.createChar(5, padLock2Open); // --LCD--
+  lcdprint("INICIANDO", "SISTEMA"); // --LCD--
 
   //Arduino Pin Configuration
   pinMode(redLed, OUTPUT);
@@ -81,7 +82,7 @@ void setup() {
     digitalWrite(redLed, LED_ON); // Red Led stays on to inform user we are going to wipe
     Serial.println(F("> LIMPAR MEMÓRIA"));
     Serial.println(F("Solte o botao dentro de 10s para cancelar"));
-    lcdprint("LIMPAR MEMÓRIA", "10s para limpar"); // --LCD--
+    lcdprint("LIMPAR MEMÓRIA", "Mantenha press."); // --LCD--
     bool buttonState = monitorWipeButton(10000); // Give user enough time to cancel operation
     if (buttonState == true && digitalRead(wipeB) == LOW) { // If button still be pressed, wipe EEPROM
       Serial.println(F("Limpando memoria..."));
