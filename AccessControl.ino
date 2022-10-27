@@ -104,8 +104,8 @@ void setup() {
     } else {
       Serial.println(F("Limpeza da memoria cancelada")); // Show some feedback that the wipe button did not pressed for 15 seconds
       digitalWrite(redLed, LED_OFF);
-			lcdprint("LIMPEZA DA MEM.", "CANCELADA"); // --LCD--
-			delay(2000); // --LCD--
+      lcdprint("LIMPEZA DA MEM.", "CANCELADA"); // --LCD--
+      delay(2000); // --LCD--
     }
   }
   // Check if master card defined, if not let user choose a master card
@@ -146,7 +146,7 @@ void setup() {
 
 ///////////////////////////////////////// Main Loop ///////////////////////////////////
 void loop() {
-	lcdprint("\x01\x02", "\x03\x04"); // --LCD--
+  lcdprint("\x01\x02", "\x03\x04"); // --LCD--
   do {
     successRead = getID(); // sets successRead to 1 when we get read from reader otherwise 0
     // When device is in use if wipe button pressed for 10 seconds initialize Master Card wiping
@@ -169,8 +169,8 @@ void loop() {
         while (1);
       }
       Serial.println(F("Exclusao do cartao mestre cancelada!"));
-			lcdprint("EXCLUSAO MESTRE", "CANCELADA"); // --LCD--
-			delay(2000); // --LCD--
+      lcdprint("EXCLUSAO MESTRE", "CANCELADA"); // --LCD--
+      delay(2000); // --LCD--
     }
     if (programMode) {
       cycleLeds(); // Program Mode cycles through Red Green Blue waiting to read a new card
@@ -185,32 +185,32 @@ void loop() {
       Serial.println(F("Saindo do modo de Programacao"));
       Serial.println(F("-----------------------------"));
       programMode = false;
-			lcdprint("\x01\x02", "\x03\x04"); // --LCD--
+      lcdprint("\x01\x02", "\x03\x04"); // --LCD--
       return;
     } else {
       if (findID(readCard)) { // If scanned card is known delete it
         Serial.println(F("Cartao ja cadastrado, removendo..."));
         lcdprint("CARTAO EXISTENTE", "Removendo..."); // --LCD--
         deleteID(readCard);
-				lcdprint("CARTAO EXISTENTE", "REMOVIDO"); // --LCD--
-				delay(1000);  // --LCD--
+        lcdprint("CARTAO EXISTENTE", "REMOVIDO"); // --LCD--
+        delay(1000);  // --LCD--
       } else { // If scanned card is not known add it
         Serial.println(F("Cartao nao cadastrado, adicionando..."));
         lcdprint("CARTAO NOVO", "Adicionando..."); // --LCD--
         writeID(readCard);
         lcdprint("CARTAO NOVO", "ADICIONADO"); // --LCD--
-				delay(1000);  // --LCD--
+        delay(1000);  // --LCD--
       }
-			Serial.println(F("--------------------------------------------"));
-			Serial.println(F("Escaneie um cartao para ADICIONAR ou REMOVER"));
-			lcdprint("MODO PROGRAMACAO", "[MESTRE] Sair   "); // --LCD--
+      Serial.println(F("--------------------------------------------"));
+      Serial.println(F("Escaneie um cartao para ADICIONAR ou REMOVER"));
+      lcdprint("MODO PROGRAMACAO", "[MESTRE] Sair   "); // --LCD--
     }
   } else {
     if (isMaster(readCard)) { // If scanned card's ID matches Master Card's ID - enter program mode
       programMode = true;
       Serial.println(F("> MODO DE PROGRAMACAO"));
-			Serial.println(F("Escaneie um cartao para ADICIONAR ou REMOVER"));
-			lcdprint("MODO PROGRAMACAO", "[MESTRE] Sair   "); // --LCD--
+      Serial.println(F("Escaneie um cartao para ADICIONAR ou REMOVER"));
+      lcdprint("MODO PROGRAMACAO", "[MESTRE] Sair   "); // --LCD--
       // uint8_t count = EEPROM.read(0); // Read the first Byte of EEPROM that
       // Serial.print(F("Existem ")); // stores the number of ID's in EEPROM
       // Serial.print(count);
@@ -223,12 +223,16 @@ void loop() {
     } else {
       if (findID(readCard)) { // If not, see if the card is in the EEPROM
         Serial.println(F("BEM-VINDO, USUARIO AUTENTICADO!"));
-        lcdprint("   BEM-VINDO"); // --LCD--
+        lcdprint("\x05\x06 PORTA ABERTA ", "\x03\x04  BEM-VINDO   "); // --LCD--
         granted(300); // Open the door lock for 300 ms
+        delay(2000); // --LCD--
+        lcdprint("\x01\x02", "\x03\x04"); // --LCD--
       } else { // If not, show that the ID was not valid
-        Serial.println(F("BLOQUEADO! INVASOR!"));
-        lcdprint("     CARTAO     ", "    RECUSADO    "); // --LCD--
+        Serial.println(F("CARTAO NAO AUTORIZADO"));
+        lcdprint("\x01\x02      NAO     ", "\x03\x04  AUTORIZADO  "); // --LCD--
         denied();
+        delay(2000); // --LCD--
+        lcdprint("\x01\x02", "\x03\x04"); // --LCD--
       }
     }
   }
@@ -265,7 +269,7 @@ uint8_t getID() {
   // There are Mifare PICCs which have 4 byte or 7 byte UID care if you use 7 byte PICC
   // I think we should assume every PICC as they have 4 byte UID
   // Until we support 7 byte PICCs
-	lcdprint("VERIFICANDO", "CARTAO"); // --LCD--
+  lcdprint("VERIFICANDO", "CARTAO"); // --LCD--
   Serial.println(F("ID do cartao escaneado:"));
   for (uint8_t i = 0; i < 4; i++) { //
     readCard[i] = mfrc522.uid.uidByte[i];
@@ -494,12 +498,10 @@ void lcdprint(String line1) { // --LCD--
 } // --LCD--
 
 void lcdprint(String line1, String line2) { // --LCD--
-	line1.trim(); // --LCD--
-	line2.trim(); // --LCD--
-	uint8_t line1Len = line1.length(); // --LCD--
-	uint8_t line2Len = line2.length(); // --LCD--
+  uint8_t line1Len = line1.length(); // --LCD--
+  uint8_t line2Len = line2.length(); // --LCD--
   for (uint8_t i = 0; i < (16 - line1Len) / 2; i++) line1 = " " + line1; // --LCD--
-	for (uint8_t i = 0; i < (16 - line2Len) / 2; i++) line2 = " " + line2; // --LCD--
+  for (uint8_t i = 0; i < (16 - line2Len) / 2; i++) line2 = " " + line2; // --LCD--
   lcd.clear(); // --LCD--
   lcd.print(line1); // --LCD--
   lcd.setCursor(0, 1); // --LCD--
