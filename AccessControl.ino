@@ -12,6 +12,19 @@
 #define relay 1 // Pino do Relé
 #define wipeB 8 // Pino do botão RESET
 
+// #define SCK_PIN 13 // Pino SCK do Leitor de RFID
+// #define MISO_PIN 12 // Pino MISO do Leitor de RFID
+// #define MOSI_PIN 11 // Pino MOSI do Leitor de RFID
+#define SS_PIN 10 // Pino SDA do Leitor de RFID
+#define RST_PIN 9 // Pino RST do Leitor de RFID
+
+#define rsLCD 7 // Pino RS do LCD
+#define enableLCD 6 // Pino ENABLE do LCD
+#define d4LCD 5 // Pino D4 do LCD
+#define d5LCD 4 // Pino D5 do LCD
+#define d6LCD 3 // Pino D6 do LCD
+#define d7LCD 2 // Pino D7 do LCD
+
 #ifdef COMMON_ANODE
 #define LED_ON LOW
 #define LED_OFF HIGH
@@ -36,11 +49,9 @@ byte padLock3[] = { B11111, B11111, B11110, B11100, B11110, B11111, B11111, B111
 byte padLock4[] = { B11111, B11111, B01111, B00111, B01111, B11111, B11111, B11111 };
 
 // Create MFRC522 instance.
-#define SS_PIN 10
-#define RST_PIN 9
 MFRC522 mfrc522(SS_PIN, RST_PIN); // --MFRC--
 
-LiquidCrystal lcd(7, 6, 5, 4, 3, 2); // --LCD--
+LiquidCrystal lcd(rsLCD, enableLCD, d4LCD, d5LCD, d6LCD, d7LCD); // --LCD--
 void lcdprint(String line1); // --LCD--
 void lcdprint(String line1, String line2); // --LCD--
 
