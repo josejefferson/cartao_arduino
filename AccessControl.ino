@@ -1,13 +1,13 @@
 #include <EEPROM.h>
 #include <SPI.h>
-#include <MFRC522.h>
+#include <MFRC522.h> // --MFRC--
 #include <LiquidCrystal.h> // --LCD--
 
 #define COMMON_ANODE // Anodo comum do LED
 
-#define redLed 14 // Pino do LED vermelho
-#define greenLed 15 // Pino do LED verde
-#define yellowLed 16 // Pino do LED amarelo
+#define redLed 14 // (A0) Pino do LED vermelho
+#define greenLed 15 // (A1) Pino do LED verde
+#define yellowLed 16 // (A2) Pino do LED amarelo
 
 #define relay 1 // Pino do Relé
 #define wipeB 8 // Pino do botão RESET
@@ -27,6 +27,7 @@ byte storedCard[4]; // Stores an ID read from EEPROM
 byte readCard[4]; // Stores scanned ID read from RFID Module
 byte masterCard[4]; // Stores master card's ID read from EEPROM
 
+// Figura de Cadeado no LCD
 byte padLock1[] = { B00000, B00000, B00011, B00111, B01110, B01100, B01100, B01100 };
 byte padLock2[] = { B00000, B00000, B11000, B11100, B01110, B00110, B00110, B00110 };
 byte padLock1Open[] = { B00000, B00011, B00111, B01110, B01100, B01100, B01100, B01100 };
@@ -37,7 +38,7 @@ byte padLock4[] = { B11111, B11111, B01111, B00111, B01111, B11111, B11111, B111
 // Create MFRC522 instance.
 #define SS_PIN 10
 #define RST_PIN 9
-MFRC522 mfrc522(SS_PIN, RST_PIN);
+MFRC522 mfrc522(SS_PIN, RST_PIN); // --MFRC--
 
 LiquidCrystal lcd(7, 6, 5, 4, 3, 2); // --LCD--
 void lcdprint(String line1); // --LCD--
@@ -69,7 +70,7 @@ void setup() {
   //Protocol Configuration
   Serial.begin(9600); // Initialize serial communications with PC
   SPI.begin(); // MFRC522 Hardware uses SPI protocol
-  mfrc522.PCD_Init(); // Initialize MFRC522 Hardware
+  mfrc522.PCD_Init(); // Initialize MFRC522 Hardware // --MFRC--
 
   //If you set Antenna Gain to Max it will increase reading distance
   //mfrc522.PCD_SetAntennaGain(mfrc522.RxGain_max);
@@ -82,7 +83,7 @@ void setup() {
     digitalWrite(redLed, LED_ON); // Red Led stays on to inform user we are going to wipe
     Serial.println(F("> LIMPAR MEMÓRIA"));
     Serial.println(F("Solte o botao dentro de 10s para cancelar"));
-    lcdprint("LIMPAR MEMÓRIA", "Mantenha press."); // --LCD--
+    lcdprint("LIMPAR MEMORIA", "Mantenha press."); // --LCD--
     bool buttonState = monitorWipeButton(10000); // Give user enough time to cancel operation
     if (buttonState == true && digitalRead(wipeB) == LOW) { // If button still be pressed, wipe EEPROM
       Serial.println(F("Limpando memoria..."));
@@ -104,8 +105,8 @@ void setup() {
     } else {
       Serial.println(F("Limpeza da memoria cancelada")); // Show some feedback that the wipe button did not pressed for 15 seconds
       digitalWrite(redLed, LED_OFF);
-      lcdprint("LIMPEZA DA MEM.", "CANCELADA"); // --LCD--
-      delay(2000); // --LCD--
+			lcdprint("LIMPEZA DA MEM.", "CANCELADA"); // --LCD--
+			delay(2000); // --LCD--
     }
   }
   // Check if master card defined, if not let user choose a master card
@@ -146,7 +147,7 @@ void setup() {
 
 ///////////////////////////////////////// Main Loop ///////////////////////////////////
 void loop() {
-  lcdprint("\x01\x02", "\x03\x04"); // --LCD--
+	lcdprint("\x00\x01", "\x02\x03"); // --LCD--
   do {
     successRead = getID(); // sets successRead to 1 when we get read from reader otherwise 0
     // When device is in use if wipe button pressed for 10 seconds initialize Master Card wiping
@@ -169,8 +170,8 @@ void loop() {
         while (1);
       }
       Serial.println(F("Exclusao do cartao mestre cancelada!"));
-      lcdprint("EXCLUSAO MESTRE", "CANCELADA"); // --LCD--
-      delay(2000); // --LCD--
+			lcdprint("EXCLUSAO MESTRE", "CANCELADA"); // --LCD--
+			delay(2000); // --LCD--
     }
     if (programMode) {
       cycleLeds(); // Program Mode cycles through Red Green Blue waiting to read a new card
@@ -185,32 +186,32 @@ void loop() {
       Serial.println(F("Saindo do modo de Programacao"));
       Serial.println(F("-----------------------------"));
       programMode = false;
-      lcdprint("\x01\x02", "\x03\x04"); // --LCD--
+			lcdprint("\x00\x01", "\x02\x03"); // --LCD--
       return;
     } else {
       if (findID(readCard)) { // If scanned card is known delete it
         Serial.println(F("Cartao ja cadastrado, removendo..."));
         lcdprint("CARTAO EXISTENTE", "Removendo..."); // --LCD--
         deleteID(readCard);
-        lcdprint("CARTAO EXISTENTE", "REMOVIDO"); // --LCD--
-        delay(1000);  // --LCD--
+				lcdprint("CARTAO EXISTENTE", "REMOVIDO"); // --LCD--
+				delay(1000);  // --LCD--
       } else { // If scanned card is not known add it
         Serial.println(F("Cartao nao cadastrado, adicionando..."));
         lcdprint("CARTAO NOVO", "Adicionando..."); // --LCD--
         writeID(readCard);
         lcdprint("CARTAO NOVO", "ADICIONADO"); // --LCD--
-        delay(1000);  // --LCD--
+				delay(1000);  // --LCD--
       }
-      Serial.println(F("--------------------------------------------"));
-      Serial.println(F("Escaneie um cartao para ADICIONAR ou REMOVER"));
-      lcdprint("MODO PROGRAMACAO", "[MESTRE] Sair   "); // --LCD--
+			Serial.println(F("--------------------------------------------"));
+			Serial.println(F("Escaneie um cartao para ADICIONAR ou REMOVER"));
+			lcdprint("MODO PROGRAMACAO", "[MESTRE] Sair   "); // --LCD--
     }
   } else {
     if (isMaster(readCard)) { // If scanned card's ID matches Master Card's ID - enter program mode
       programMode = true;
       Serial.println(F("> MODO DE PROGRAMACAO"));
-      Serial.println(F("Escaneie um cartao para ADICIONAR ou REMOVER"));
-      lcdprint("MODO PROGRAMACAO", "[MESTRE] Sair   "); // --LCD--
+			Serial.println(F("Escaneie um cartao para ADICIONAR ou REMOVER"));
+			lcdprint("MODO PROGRAMACAO", "[MESTRE] Sair   "); // --LCD--
       // uint8_t count = EEPROM.read(0); // Read the first Byte of EEPROM that
       // Serial.print(F("Existem ")); // stores the number of ID's in EEPROM
       // Serial.print(count);
@@ -223,16 +224,14 @@ void loop() {
     } else {
       if (findID(readCard)) { // If not, see if the card is in the EEPROM
         Serial.println(F("BEM-VINDO, USUARIO AUTENTICADO!"));
-        lcdprint("\x05\x06 PORTA ABERTA ", "\x03\x04  BEM-VINDO   "); // --LCD--
+        lcdprint("\x04\x05 PORTA ABERTA ", "\x02\x03  BEM-VINDO   "); // --LCD--
         granted(300); // Open the door lock for 300 ms
-        delay(2000); // --LCD--
-        lcdprint("\x01\x02", "\x03\x04"); // --LCD--
+				delay(2000); // --LCD--
+        lcdprint("\x00\x01", "\x02\x03"); // --LCD--
       } else { // If not, show that the ID was not valid
         Serial.println(F("CARTAO NAO AUTORIZADO"));
-        lcdprint("\x01\x02      NAO     ", "\x03\x04  AUTORIZADO  "); // --LCD--
+        lcdprint("\x00\x01      NAO     ", "\x02\x03  AUTORIZADO  "); // --LCD--
         denied();
-        delay(2000); // --LCD--
-        lcdprint("\x01\x02", "\x03\x04"); // --LCD--
       }
     }
   }
@@ -258,51 +257,80 @@ void denied() {
 }
 
 ///////////////////////////////////////// Get PICC's UID ///////////////////////////////////
-uint8_t getID() {
+uint8_t getID() { // --MFRC--
   // Getting ready for Reading PICCs
-  if (!mfrc522.PICC_IsNewCardPresent()) { //If a new PICC placed to RFID reader continue
-    return 0;
-  }
-  if (!mfrc522.PICC_ReadCardSerial()) { //Since a PICC placed get Serial and continue
-    return 0;
-  }
+  if (!mfrc522.PICC_IsNewCardPresent()) { //If a new PICC placed to RFID reader continue // --MFRC--
+    return 0; // --MFRC--
+  } // --MFRC--
+  if (!mfrc522.PICC_ReadCardSerial()) { //Since a PICC placed get Serial and continue // --MFRC--
+    return 0; // --MFRC--
+  } // --MFRC--
   // There are Mifare PICCs which have 4 byte or 7 byte UID care if you use 7 byte PICC
   // I think we should assume every PICC as they have 4 byte UID
   // Until we support 7 byte PICCs
-  lcdprint("VERIFICANDO", "CARTAO"); // --LCD--
-  Serial.println(F("ID do cartao escaneado:"));
-  for (uint8_t i = 0; i < 4; i++) { //
-    readCard[i] = mfrc522.uid.uidByte[i];
-    Serial.print(readCard[i], HEX);
-  }
-  Serial.println("");
-  mfrc522.PICC_HaltA(); // Stop reading
-  return 1;
-}
+	lcdprint("VERIFICANDO", "CARTAO"); // --LCD-- // --MFRC--
+  Serial.println(F("ID do cartao escaneado:")); // --MFRC--
+  for (uint8_t i = 0; i < 4; i++) { // // --MFRC--
+    readCard[i] = mfrc522.uid.uidByte[i]; // --MFRC--
+    Serial.print(readCard[i], HEX); // --MFRC--
+  } // --MFRC--
+  Serial.println(""); // --MFRC--
+  mfrc522.PICC_HaltA(); // Stop reading // --MFRC--
+  return 1; // --MFRC--
+} // --MFRC--
 
-void ShowReaderDetails() {
+// uint8_t getID() { // --MOCK MFRC522--
+	// char charBuf[8]; // --MOCK MFRC522--
+	// if (Serial.available() > 0) { // --MOCK MFRC522--
+    // String content = Serial.readString(); // --MOCK MFRC522--
+    // content.trim(); // --MOCK MFRC522--
+		// content.toCharArray(charBuf, 9); // --MOCK MFRC522--
+		// char byte0hex[2] = {charBuf[0], charBuf[1]}; // --MOCK MFRC522--
+    // char byte1hex[2] = {charBuf[2], charBuf[3]}; // --MOCK MFRC522--
+    // char byte2hex[2] = {charBuf[4], charBuf[5]}; // --MOCK MFRC522--
+    // char byte3hex[2] = {charBuf[6], charBuf[7]}; // --MOCK MFRC522--
+
+    // byte byte0 = hex8(byte0hex); // --MOCK MFRC522--
+    // byte byte1 = hex8(byte1hex); // --MOCK MFRC522--
+    // byte byte2 = hex8(byte2hex); // --MOCK MFRC522--
+    // byte byte3 = hex8(byte3hex); // --MOCK MFRC522--
+
+    // readCard[0] = byte0; // --MOCK MFRC522--
+    // readCard[1] = byte1; // --MOCK MFRC522--
+    // readCard[2] = byte2; // --MOCK MFRC522--
+    // readCard[3] = byte3; // --MOCK MFRC522--
+
+		// return 1; // --MOCK MFRC522--
+  // } else { // --MOCK MFRC522--
+		// return 0; // --MOCK MFRC522--
+	// } // --MOCK MFRC522--
+// } // --MOCK MFRC522--
+
+// void ShowReaderDetails() {} // --MOCK MFRC522--
+
+void ShowReaderDetails() { // --MFRC--
   // Get the MFRC522 software version
-  byte v = mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
-  Serial.print(F("MFRC522 Software Version: 0x"));
-  Serial.print(v, HEX);
-  if (v == 0x91)
-    Serial.print(F(" = v1.0"));
-  else if (v == 0x92)
-    Serial.print(F(" = v2.0"));
-  else
-    Serial.print(F(" (unknown),probably a chinese clone?"));
-  Serial.println("");
+  byte v = mfrc522.PCD_ReadRegister(mfrc522.VersionReg); // --MFRC--
+  Serial.print(F("MFRC522 Software Version: 0x")); // --MFRC--
+  Serial.print(v, HEX); // --MFRC--
+  if (v == 0x91) // --MFRC--
+    Serial.print(F(" = v1.0")); // --MFRC--
+  else if (v == 0x92) // --MFRC--
+    Serial.print(F(" = v2.0")); // --MFRC--
+  else // --MFRC--
+    Serial.print(F(" (unknown),probably a chinese clone?")); // --MFRC--
+  Serial.println(""); // --MFRC--
   // When 0x00 or 0xFF is returned, communication probably failed
-  if ((v == 0x00) || (v == 0xFF)) {
-    Serial.println(F("WARNING: Communication failure, is the MFRC522 properly connected?"));
-    Serial.println(F("SYSTEM HALTED: Check connections."));
+  if ((v == 0x00) || (v == 0xFF)) { // --MFRC--
+    Serial.println(F("WARNING: Communication failure, is the MFRC522 properly connected?")); // --MFRC--
+    Serial.println(F("SYSTEM HALTED: Check connections.")); // --MFRC--
     // Visualize system is halted
-    digitalWrite(greenLed, LED_OFF); // Make sure green LED is off
-    digitalWrite(yellowLed, LED_OFF); // Make sure blue LED is off
-    digitalWrite(redLed, LED_ON); // Turn on red LED
-    while (true); // do not go further
-  }
-}
+    digitalWrite(greenLed, LED_OFF); // Make sure green LED is off // --MFRC--
+    digitalWrite(yellowLed, LED_OFF); // Make sure blue LED is off // --MFRC--
+    digitalWrite(redLed, LED_ON); // Turn on red LED // --MFRC--
+    while (true); // do not go further // --MFRC--
+  } // --MFRC--
+} // --MFRC--
 
 ///////////////////////////////////////// Cycle Leds (Program Mode) ///////////////////////////////////
 void cycleLeds() {
@@ -498,12 +526,36 @@ void lcdprint(String line1) { // --LCD--
 } // --LCD--
 
 void lcdprint(String line1, String line2) { // --LCD--
-  uint8_t line1Len = line1.length(); // --LCD--
-  uint8_t line2Len = line2.length(); // --LCD--
+	uint8_t line1Len = line1.length(); // --LCD--
+	uint8_t line2Len = line2.length(); // --LCD--
   for (uint8_t i = 0; i < (16 - line1Len) / 2; i++) line1 = " " + line1; // --LCD--
-  for (uint8_t i = 0; i < (16 - line2Len) / 2; i++) line2 = " " + line2; // --LCD--
+	for (uint8_t i = 0; i < (16 - line2Len) / 2; i++) line2 = " " + line2; // --LCD--
   lcd.clear(); // --LCD--
   lcd.print(line1); // --LCD--
   lcd.setCursor(0, 1); // --LCD--
   lcd.print(line2); // --LCD--
 } // --LCD--
+
+///////////////////////////////////////////////////////////////////////////
+int hex8(char *in)
+{
+   uint8_t c, h;
+
+   c = in[0];
+
+   if (c <= '9' && c >= '0') {  c -= '0'; }
+   else if (c <= 'f' && c >= 'a') { c -= ('a' - 0x0a); }
+   else if (c <= 'F' && c >= 'A') { c -= ('A' - 0x0a); }
+   else return(-1);
+
+   h = c;
+
+   c = in[1];
+
+   if (c <= '9' && c >= '0') {  c -= '0'; }
+   else if (c <= 'f' && c >= 'a') { c -= ('a' - 0x0a); }
+   else if (c <= 'F' && c >= 'A') { c -= ('A' - 0x0a); }
+   else return(-1);
+
+   return ( h<<4 | c);
+}
